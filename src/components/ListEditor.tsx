@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { FavoriteStarButton } from './FavoriteStarButton'
 import { ScoreSelect } from './ScoreSelect'
 import { StatusSelect } from './StatusSelect'
 import { MAX_FAVORITES, type GameStatus, type UserGame } from '../types'
@@ -102,22 +103,26 @@ export function ListEditor({
         </label>
       </div>
 
-      <label className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-surface px-3 py-2.5 text-sm">
-        <input
-          type="checkbox"
-          className="mt-0.5 accent-[var(--mgl-accent)]"
-          checked={isFavorite}
+      <div className="flex items-center gap-3 rounded-md border border-line bg-surface px-3 py-2.5 text-sm">
+        <FavoriteStarButton
+          active={isFavorite}
           disabled={!canFavorite && !isFavorite}
-          onChange={(e) => setIsFavorite(e.target.checked)}
+          onToggle={() => {
+            if (!isFavorite && !canFavorite) {
+              setError(`You can favourite at most ${MAX_FAVORITES} games`)
+              return
+            }
+            setIsFavorite((v) => !v)
+          }}
         />
-        <span>
+        <span className="min-w-0">
           <span className="block font-medium text-ink">Favourite</span>
           <span className="block text-muted">
-            Mark as one of your favourite games ({othersFavorited}/{MAX_FAVORITES} used
+            Tap the star to mark this as a favourite ({othersFavorited}/{MAX_FAVORITES} used
             {isFavorite ? ', including this one' : ''})
           </span>
         </span>
-      </label>
+      </div>
 
       <label className="block space-y-1 text-sm">
         <span className="font-medium text-muted">Notes</span>

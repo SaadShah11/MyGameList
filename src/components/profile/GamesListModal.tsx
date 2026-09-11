@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { X } from 'lucide-react'
+import { Trash2, X } from 'lucide-react'
+import { FavoriteStarButton } from '../FavoriteStarButton'
 import { Pagination } from '../Pagination'
 import { ScoreSelect } from '../ScoreSelect'
 import { StatusSelect } from '../StatusSelect'
@@ -176,8 +177,13 @@ export function GamesListModal({
                     <td className="px-3 py-2 sm:px-4">
                       <Link
                         to={entry.game_slug ? `/games/${entry.game_slug}` : '#'}
-                        className="block h-14 w-10 overflow-hidden rounded border border-line bg-surface-2"
+                        className={`block h-14 w-10 overflow-hidden rounded bg-surface-2 ${
+                          entry.is_favorite
+                            ? 'border-2 border-[#eab308] shadow-[0_0_0_1px_rgba(234,179,8,0.35)]'
+                            : 'border border-line'
+                        }`}
                         onClick={onClose}
+                        title={entry.is_favorite ? 'Favourite' : undefined}
                       >
                         {entry.cover_url ? (
                           <img
@@ -200,11 +206,6 @@ export function GamesListModal({
                       >
                         {entry.game_name ?? `Game #${entry.igdb_id}`}
                       </Link>
-                      {entry.is_favorite && (
-                        <span className="mt-0.5 block text-[11px] font-bold text-accent">
-                          Favourite
-                        </span>
-                      )}
                     </td>
                     <td className="px-3 py-2 sm:px-4">
                       {editable && onUpdate ? (
@@ -261,26 +262,23 @@ export function GamesListModal({
                     </td>
                     {editable && (
                       <td className="px-3 py-2 sm:px-4">
-                        <div className="flex flex-wrap gap-1.5">
-                          <button
-                            type="button"
+                        <div className="flex flex-wrap items-center gap-1">
+                          <FavoriteStarButton
+                            active={entry.is_favorite}
                             disabled={busyId === entry.id}
-                            className={`btn !px-2 !py-1 text-xs ${
-                              entry.is_favorite ? 'btn-primary' : 'btn-ghost'
-                            }`}
-                            onClick={() =>
+                            onToggle={() =>
                               onUpdate?.(entry.id, { is_favorite: !entry.is_favorite })
                             }
-                          >
-                            {entry.is_favorite ? 'Unfav' : 'Fav'}
-                          </button>
+                          />
                           <button
                             type="button"
                             disabled={busyId === entry.id}
-                            className="btn btn-danger !px-2 !py-1 text-xs"
+                            className="inline-flex items-center justify-center rounded-md p-1.5 text-danger transition hover:bg-danger/10 disabled:opacity-55"
+                            aria-label="Remove from list"
+                            title="Remove from list"
                             onClick={() => onRemove?.(entry.id)}
                           >
-                            Remove
+                            <Trash2 size={18} strokeWidth={1.75} aria-hidden />
                           </button>
                         </div>
                       </td>
