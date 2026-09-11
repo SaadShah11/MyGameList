@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --color-ink: #0b1220;
+  --color-ink-soft: #121a2b;
+  --color-panel: #162033;
+  --color-line: #243049;
+  --color-muted: #8b9bb8;
+  --color-cream: #e8eef8;
+  --color-accent: #2dd4bf;
+  --color-accent-dim: #14b8a6;
+  --color-amber: #f59e0b;
+  --color-danger: #f87171;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  color: var(--color-cream);
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(45, 212, 191, 0.12), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 90% 0%, rgba(245, 158, 11, 0.08), transparent 45%),
+    linear-gradient(180deg, var(--color-ink) 0%, #070b14 100%);
+  background-attachment: fixed;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+@keyframes lift-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-tab {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-lift {
+  animation: lift-in 0.35s ease-out both;
+}
+
+.animate-tab {
+  animation: fade-tab 0.25s ease-out both;
+}
+
+.cover-hover {
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.cover-hover:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}

@@ -1,0 +1,14 @@
+# A string used to distinguish different Supabase projects on the same machine.
+project_id = "mygamelist"
+
+[api]
+enabled = true
+
+[db]
+major_version = 15
+
+[functions.rawg-proxy]
+# Public catalog reads (search/browse) work without a user session.
+# RAWG_API_KEY stays server-side; user list data is still protected by RLS.
+verify_jwt = false
+
