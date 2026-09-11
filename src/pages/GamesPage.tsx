@@ -1,16 +1,38 @@
-import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { GameCard } from '../components/GameCard'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { GameCard, GameListRow } from '../components/GameCard'
+import { DensityToggle } from '../components/DensityToggle'
 import { SearchBar } from '../components/SearchBar'
-import { getPopularGames, searchGames } from '../lib/gamesApi'
+import { ViewToggle } from '../components/ViewToggle'
 import { useAuth } from '../context/AuthContext'
-import type { Game } from '../types'
+import {
+  gridColsClass,
+  usePreferences,
+  type CatalogSort,
+} from '../context/PreferencesContext'
+import { getPopularGames, searchGames } from '../lib/gamesApi'
+import { getUserGames, removeUserGame, upsertUserGame } from '../lib/userGames'
+import type { Game, GameStatus, UserGame } from '../types'
+
+function sortGames(games: Game[], sort: CatalogSort): Game[] {
+  if (sort === 'default') return games
+  const copy = [...games]
+  if (sort === 'name') {
+    copy.sort((a, b) => a.name.localeCompare(b.name))
+  } else if (sort === 'year') {
+    copy.sort((a, b) => (b.release_year ?? 0) - (a.release_year ?? 0))
+  }
+  return copy
+}
 
 export function GamesPage() {
   const [params] = useSearchParams()
   const query = params.get('q')?.trim() ?? ''
-  const { configured } = useAuth()
+  const { configured, user } = useAuth()
+  const { prefs, setPref } = usePreferences()
   const [games, setGames] = useState<Game[]>([])
+  const [statusById, setStatusById] = useState<Record<number, UserGame>>({})
+  const [busyId, setBusyId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -43,35 +65,166 @@ export function GamesPage() {
     }
   }, [query, configured])
 
+  useEffect(() => {
+    let cancelled = false
+    async function loadStatuses() {
+      if (!user) {
+        setStatusById({})
+        return
+      }
+      try {
+        const list = await getUserGames(user.id)
+        if (cancelled) return
+        const map: Record<number, UserGame> = {}
+        for (const entry of list) map[entry.igdb_id] = entry
+        setStatusById(map)
+      } catch {
+        if (!cancelled) setStatusById({})
+      }
+    }
+    void loadStatuses()
+    return () => {
+      cancelled = true
+    }
+  }, [user])
+
+  const sorted = useMemo(
+    () => sortGames(games, prefs.catalogSort),
+    [games, prefs.catalogSort],
+  )
+
+  const onStatusChange = useCallback(
+    async (game: Game, status: GameStatus | null) => {
+      if (!user) return
+      setBusyId(game.igdb_id)
+      setError(null)
+      try {
+        const existing = statusById[game.igdb_id]
+        if (status === null) {
+          if (existing) {
+            await removeUserGame(existing.id)
+            setStatusById((prev) => {
+              const next = { ...prev }
+              delete next[game.igdb_id]
+              return next
+            })
+          }
+          return
+        }
+        const saved = await upsertUserGame(user.id, {
+          igdb_id: game.igdb_id,
+          status,
+          score: existing?.score ?? null,
+          hours_played: existing?.hours_played ?? null,
+          notes: existing?.notes ?? null,
+          is_favorite: existing?.is_favorite ?? false,
+        })
+        setStatusById((prev) => ({ ...prev, [game.igdb_id]: saved }))
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to update status')
+      } finally {
+        setBusyId(null)
+      }
+    },
+    [user, statusById],
+  )
+
   return (
     <div className="space-y-6">
       <div className="space-y-3">
-        <h1 className="font-display text-4xl tracking-wide text-cream">
-          {query ? `Results for “${query}”` : 'Games library'}
+        <h1 className="font-display text-3xl font-extrabold text-ink md:text-4xl">
+          {query ? `Results for “${query}”` : 'Games'}
         </h1>
         <p className="text-muted">
-          {query
-            ? 'Search powered by RAWG via a secure Edge Function.'
-            : 'Popular titles from RAWG. Search to find anything in the catalog.'}
+          {query ? 'Matches from RAWG.' : 'Popular titles. Search to dig into the full catalog.'}
+          {user
+            ? ' Set a status from the list without opening the page.'
+            : (
+              <>
+                {' '}
+                <Link to="/login" className="font-semibold text-accent hover:underline">
+                  Log in
+                </Link>{' '}
+                to set status from results.
+              </>
+            )}
         </p>
         <SearchBar initialQuery={query} className="max-w-xl" />
       </div>
 
-      {loading && <p className="text-muted">Loading games…</p>}
-      {error && (
-        <div className="rounded-md border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">
-          {error}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-y border-line py-3">
+        <p className="text-sm text-muted">
+          {loading ? 'Loading…' : `${sorted.length} title${sorted.length === 1 ? '' : 's'}`}
+        </p>
+        <div className="relative z-20 flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-2 text-sm text-muted">
+            Sort
+            <select
+              className="field relative z-20 !w-auto !py-1.5"
+              value={prefs.catalogSort}
+              onChange={(e) => setPref('catalogSort', e.target.value as CatalogSort)}
+            >
+              <option value="default">Default</option>
+              <option value="name">Name</option>
+              <option value="year">Year</option>
+            </select>
+          </label>
+          {prefs.catalogView === 'grid' && (
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
+              <span>Density</span>
+              <DensityToggle
+                value={prefs.gridDensity}
+                onChange={(density) => setPref('gridDensity', density)}
+              />
+            </div>
+          )}
+          <ViewToggle
+            value={prefs.catalogView}
+            onChange={(mode) => setPref('catalogView', mode)}
+          />
         </div>
+      </div>
+
+      {error && (
+        <div className="panel border-danger/40 px-4 py-3 text-sm text-danger">{error}</div>
       )}
-      {!loading && !error && games.length === 0 && (
+      {!loading && !error && sorted.length === 0 && (
         <p className="text-muted">No games found. Try another search.</p>
       )}
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-        {games.map((game, i) => (
-          <GameCard key={game.igdb_id} game={game} index={i} />
-        ))}
-      </div>
+      {prefs.catalogView === 'grid' ? (
+        <div className={gridColsClass(prefs.gridDensity)}>
+          {sorted.map((game, i) => (
+            <GameCard
+              key={game.igdb_id}
+              game={game}
+              index={i}
+              showStatus={Boolean(user)}
+              status={statusById[game.igdb_id]?.status ?? null}
+              statusDisabled={busyId === game.igdb_id}
+              onStatusChange={(status) => void onStatusChange(game, status)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="panel px-4">
+          {sorted.map((game) => (
+            <GameListRow
+              key={game.igdb_id}
+              game={game}
+              showStatus={Boolean(user)}
+              status={statusById[game.igdb_id]?.status ?? null}
+              statusDisabled={busyId === game.igdb_id}
+              onStatusChange={(status) => void onStatusChange(game, status)}
+              trailing={
+                <span className="text-xs font-semibold text-muted">
+                  {game.release_year ?? 'TBA'}
+                </span>
+              }
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

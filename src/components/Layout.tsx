@@ -2,37 +2,63 @@ import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
-  `px-3 py-2 text-sm font-medium transition-colors ${
-    isActive ? 'text-accent' : 'text-muted hover:text-cream'
+  `px-2.5 py-1.5 text-sm font-semibold transition-colors ${
+    isActive ? 'text-accent' : 'text-muted hover:text-ink'
   }`
+
+function Avatar({ url, name }: { url: string | null | undefined; name: string }) {
+  const initial = (name || '?').slice(0, 1).toUpperCase()
+  if (url) {
+    return (
+      <img
+        src={url}
+        alt=""
+        className="h-8 w-8 rounded-full border border-line object-cover"
+      />
+    )
+  }
+  return (
+    <span
+      className="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-surface-2 text-xs font-bold text-muted"
+      aria-hidden
+    >
+      {initial}
+    </span>
+  )
+}
 
 export function Layout() {
   const { user, profile, signOut, configured } = useAuth()
+  const label = profile?.display_name || profile?.username || 'player'
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b border-line/80 bg-ink/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <Link to="/" className="font-display text-3xl tracking-wide text-cream">
+      <header className="sticky top-0 z-40 border-b border-line bg-surface/90 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+          <Link to="/" className="font-display text-2xl font-extrabold tracking-tight text-ink">
             MyGame<span className="text-accent">List</span>
           </Link>
-          <nav className="flex flex-wrap items-center gap-1">
+
+          <nav className="flex flex-wrap items-center gap-0.5">
             <NavLink to="/games" className={navClass}>
               Games
             </NavLink>
+            {user && (
+              <NavLink to="/profile" className={navClass}>
+                My List
+              </NavLink>
+            )}
             {user ? (
               <>
-                <NavLink to="/profile" className={navClass}>
-                  My List
-                </NavLink>
-                <span className="hidden text-sm text-muted sm:inline">
-                  {profile?.username ?? 'player'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => void signOut()}
-                  className="ml-1 rounded border border-line px-3 py-1.5 text-sm text-muted transition hover:border-accent hover:text-accent"
+                <Link
+                  to="/settings"
+                  className="ml-2 flex items-center gap-2 rounded-full py-0.5 pl-0.5 pr-2 hover:bg-surface-2"
+                  title="Open settings"
                 >
+                  <Avatar url={profile?.avatar_url} name={label} />
+                  <span className="hidden text-sm font-medium text-muted sm:inline">{label}</span>
+                </Link>
+                <button type="button" onClick={() => void signOut()} className="btn btn-ghost ml-1 !py-1">
                   Sign out
                 </button>
               </>
@@ -41,10 +67,7 @@ export function Layout() {
                 <NavLink to="/login" className={navClass}>
                   Login
                 </NavLink>
-                <NavLink
-                  to="/signup"
-                  className="ml-1 rounded bg-accent px-3 py-1.5 text-sm font-semibold text-ink transition hover:bg-accent-dim"
-                >
+                <NavLink to="/signup" className="btn btn-primary ml-1 !py-1.5">
                   Sign up
                 </NavLink>
               </>
@@ -52,7 +75,7 @@ export function Layout() {
           </nav>
         </div>
         {!configured && (
-          <div className="border-t border-amber/30 bg-amber/10 px-4 py-2 text-center text-sm text-amber">
+          <div className="border-t border-line bg-surface-2 px-4 py-2 text-center text-sm text-warn">
             Supabase is not configured. Add <code className="font-mono">VITE_SUPABASE_*</code> keys
             to enable auth and the game library.
           </div>
@@ -63,19 +86,24 @@ export function Layout() {
         <Outlet />
       </main>
 
-      <footer className="border-t border-line/60 py-6 text-center text-sm text-muted">
-        <p>
-          MyGameList — personal game tracker. Game data via{' '}
-          <a
-            href="https://rawg.io/"
-            className="text-accent hover:underline"
-            target="_blank"
-            rel="noreferrer"
-          >
-            RAWG
-          </a>
-          .
-        </p>
+      <footer className="border-t border-line py-8 text-sm text-muted">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="font-display font-bold text-ink">
+            MyGame<span className="text-accent">List</span>
+          </p>
+          <p>
+            Personal game tracker. Data from{' '}
+            <a
+              href="https://rawg.io/"
+              className="font-semibold text-accent hover:underline"
+              target="_blank"
+              rel="noreferrer"
+            >
+              RAWG
+            </a>
+            .
+          </p>
+        </div>
       </footer>
     </div>
   )

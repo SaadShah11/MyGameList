@@ -9,7 +9,7 @@ interface SearchBarProps {
 
 export function SearchBar({
   initialQuery = '',
-  placeholder = 'Search games…',
+  placeholder = 'Search the catalog…',
   className = '',
 }: SearchBarProps) {
   const [query, setQuery] = useState(initialQuery)
@@ -28,12 +28,9 @@ export function SearchBar({
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-md border border-line bg-panel px-4 py-2.5 text-cream outline-none ring-accent/40 placeholder:text-muted focus:ring-2"
+        className="field"
       />
-      <button
-        type="submit"
-        className="shrink-0 rounded-md bg-accent px-4 py-2.5 font-semibold text-ink transition hover:bg-accent-dim"
-      >
+      <button type="submit" className="btn btn-primary shrink-0">
         Search
       </button>
     </form>

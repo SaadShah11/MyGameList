@@ -27,45 +27,44 @@ export function LoginPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-6">
-      <h1 className="font-display text-4xl tracking-wide">Login</h1>
+    <div className="mx-auto max-w-md space-y-6 animate-rise">
+      <div>
+        <h1 className="font-display text-3xl font-extrabold text-ink">Login</h1>
+        <p className="mt-1 text-muted">Sign in to manage your game list.</p>
+      </div>
       {!configured && (
-        <p className="text-sm text-amber">Configure Supabase env vars before signing in.</p>
+        <p className="text-sm text-warn">Configure Supabase env vars before signing in.</p>
       )}
-      <form onSubmit={(e) => void onSubmit(e)} className="space-y-4 rounded-lg border border-line bg-panel/70 p-5">
+      <form onSubmit={(e) => void onSubmit(e)} className="panel space-y-4 p-5">
         <label className="block space-y-1 text-sm">
-          <span className="text-muted">Email</span>
+          <span className="font-medium text-muted">Email</span>
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-md border border-line bg-ink-soft px-3 py-2 outline-none focus:ring-2 focus:ring-accent/40"
+            className="field"
           />
         </label>
         <label className="block space-y-1 text-sm">
-          <span className="text-muted">Password</span>
+          <span className="font-medium text-muted">Password</span>
           <input
             type="password"
             required
             minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-md border border-line bg-ink-soft px-3 py-2 outline-none focus:ring-2 focus:ring-accent/40"
+            className="field"
           />
         </label>
         {error && <p className="text-sm text-danger">{error}</p>}
-        <button
-          type="submit"
-          disabled={busy || !configured}
-          className="w-full rounded-md bg-accent py-2.5 font-semibold text-ink hover:bg-accent-dim disabled:opacity-60"
-        >
+        <button type="submit" disabled={busy || !configured} className="btn btn-primary w-full">
           {busy ? 'Signing in…' : 'Sign in'}
         </button>
       </form>
       <p className="text-sm text-muted">
         No account?{' '}
-        <Link to="/signup" className="text-accent hover:underline">
+        <Link to="/signup" className="font-semibold text-accent hover:underline">
           Sign up
         </Link>
       </p>

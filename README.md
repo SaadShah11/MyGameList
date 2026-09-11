@@ -41,6 +41,8 @@ VITE_SUPABASE_ANON_KEY=your_anon_key
 ```
 
 4. (Recommended for local testing) In Authentication → Providers → Email, you can disable “Confirm email” while developing.
+5. Run the avatars storage migration in [`supabase/migrations/20260328000001_avatars_storage.sql`](supabase/migrations/20260328000001_avatars_storage.sql) (SQL Editor) so profile image uploads work.
+6. Run the favourites migration in [`supabase/migrations/20260328000002_favorites.sql`](supabase/migrations/20260328000002_favorites.sql) so favourite games work (max 10).
 
 ### 3. RAWG API key
 

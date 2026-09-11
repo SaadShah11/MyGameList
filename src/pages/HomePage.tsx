@@ -6,55 +6,72 @@ export function HomePage() {
   const { user, profile } = useAuth()
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-line bg-ink-soft/60">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-40"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(36,48,73,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(36,48,73,0.35) 1px, transparent 1px)',
-          backgroundSize: '48px 48px',
-        }}
-      />
-      <div className="relative grid gap-10 px-6 py-16 md:px-12 md:py-24">
-        <div className="max-w-2xl space-y-5 animate-lift">
-          <p className="font-display text-6xl leading-none tracking-wide text-cream sm:text-7xl md:text-8xl">
+    <section className="relative overflow-hidden border-b border-line pb-2">
+      <div className="grid gap-10 py-10 md:py-16 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+        <div className="animate-rise space-y-6">
+          <p className="font-display text-5xl font-extrabold leading-[0.95] tracking-tight text-ink sm:text-6xl md:text-7xl">
             MyGame<span className="text-accent">List</span>
           </p>
-          <h1 className="max-w-xl text-xl font-medium text-cream/90 sm:text-2xl">
-            Track what you play. Rate what you finish. Build your personal games library.
+          <h1 className="max-w-lg text-xl font-medium text-ink/90 sm:text-2xl">
+            A quiet place to track what you play.
           </h1>
-          <p className="max-w-lg text-muted">
-            Browse a huge catalog, add titles to your list, and keep Playing, Completed, On Hold,
-            Dropped, and Plan to Play in one place.
+          <p className="max-w-md text-muted">
+            Search a large catalog, rate titles, and keep Playing / Completed / Plan to Play in one
+            list — without the noise.
           </p>
+          <SearchBar className="max-w-xl" />
+          <div className="flex flex-wrap gap-2">
+            <Link to="/games" className="btn btn-primary">
+              Browse games
+            </Link>
+            {user ? (
+              <Link to="/profile" className="btn btn-ghost">
+                Open {profile?.username ? `@${profile.username}` : 'your'} list
+              </Link>
+            ) : (
+              <Link to="/signup" className="btn btn-ghost">
+                Create a profile
+              </Link>
+            )}
+          </div>
         </div>
 
-        <div className="max-w-xl animate-lift" style={{ animationDelay: '80ms' }}>
-          <SearchBar />
-        </div>
-
-        <div className="flex flex-wrap gap-3 animate-lift" style={{ animationDelay: '140ms' }}>
-          <Link
-            to="/games"
-            className="rounded-md bg-accent px-5 py-2.5 font-semibold text-ink transition hover:bg-accent-dim"
-          >
-            Browse games
-          </Link>
-          {user ? (
-            <Link
-              to="/profile"
-              className="rounded-md border border-line px-5 py-2.5 font-medium text-cream transition hover:border-accent hover:text-accent"
-            >
-              Open {profile?.username ? `${profile.username}'s` : 'your'} list
-            </Link>
-          ) : (
-            <Link
-              to="/signup"
-              className="rounded-md border border-line px-5 py-2.5 font-medium text-cream transition hover:border-accent hover:text-accent"
-            >
-              Create a profile
-            </Link>
-          )}
+        <div
+          className="animate-rise panel relative hidden min-h-56 overflow-hidden p-6 md:block"
+          style={{ animationDelay: '80ms' }}
+        >
+          <div
+            className="pointer-events-none absolute inset-0 opacity-70"
+            style={{
+              backgroundImage:
+                'linear-gradient(var(--mgl-line) 1px, transparent 1px), linear-gradient(90deg, var(--mgl-line) 1px, transparent 1px)',
+              backgroundSize: '28px 28px',
+              maskImage: 'radial-gradient(circle at 70% 40%, black, transparent 75%)',
+            }}
+          />
+          <div className="relative space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">
+              Your backlog, clarified
+            </p>
+            <ul className="space-y-3 text-sm text-ink">
+              <li className="flex justify-between border-b border-line pb-2">
+                <span>Playing</span>
+                <span className="text-muted">in progress</span>
+              </li>
+              <li className="flex justify-between border-b border-line pb-2">
+                <span>Completed</span>
+                <span className="text-muted">scored & dated</span>
+              </li>
+              <li className="flex justify-between border-b border-line pb-2">
+                <span>Plan to Play</span>
+                <span className="text-muted">queued</span>
+              </li>
+              <li className="flex justify-between">
+                <span>On Hold / Dropped</span>
+                <span className="text-muted">honest tracking</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </section>

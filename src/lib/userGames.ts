@@ -14,7 +14,7 @@ export async function getProfile(userId: string): Promise<Profile | null> {
 
 export async function updateProfile(
   userId: string,
-  updates: Partial<Pick<Profile, 'username' | 'display_name' | 'avatar_url'>>,
+  updates: Partial<Pick<Profile, 'display_name' | 'avatar_url'>>,
 ): Promise<Profile> {
   const { data, error } = await supabase
     .from('profiles')
@@ -24,6 +24,36 @@ export async function updateProfile(
     .single()
   if (error) throw error
   return data
+}
+
+export async function uploadAvatar(userId: string, file: File): Promise<string> {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase is not configured')
+  }
+
+  const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  if (!allowed.includes(file.type)) {
+    throw new Error('Use a JPG, PNG, WebP, or GIF image')
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    throw new Error('Image must be 2MB or smaller')
+  }
+
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+  const path = `${userId}/avatar.${ext === 'jpeg' ? 'jpg' : ext}`
+
+  const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, {
+    upsert: true,
+    contentType: file.type,
+    cacheControl: '3600',
+  })
+  if (uploadError) throw uploadError
+
+  const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+  const publicUrl = `${data.publicUrl}?t=${Date.now()}`
+
+  await updateProfile(userId, { avatar_url: publicUrl })
+  return publicUrl
 }
 
 export async function getUserGames(userId: string): Promise<UserGame[]> {
@@ -68,6 +98,7 @@ export async function upsertUserGame(
         notes: input.notes ?? null,
         started_at: input.started_at ?? null,
         finished_at: input.finished_at ?? null,
+        is_favorite: input.is_favorite ?? false,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'user_id,igdb_id' },
@@ -85,6 +116,7 @@ export async function updateUserGameFields(
     score: number | null
     hours_played: number | null
     notes: string | null
+    is_favorite: boolean
   }>,
 ): Promise<UserGame> {
   const { data, error } = await supabase
@@ -95,6 +127,17 @@ export async function updateUserGameFields(
     .single()
   if (error) throw error
   return data as UserGame
+}
+
+export async function countFavorites(userId: string): Promise<number> {
+  if (!isSupabaseConfigured) return 0
+  const { count, error } = await supabase
+    .from('user_games')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('is_favorite', true)
+  if (error) throw error
+  return count ?? 0
 }
 
 export async function removeUserGame(id: string): Promise<void> {
