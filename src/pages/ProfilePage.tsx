@@ -35,13 +35,18 @@ export function ProfilePage() {
   const [busyId, setBusyId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!user) return
+    const userId = user?.id
+    if (!userId) {
+      setEntries([])
+      setLoading(false)
+      return
+    }
     let cancelled = false
-    async function load() {
+    async function load(id: string) {
       setLoading(true)
       setError(null)
       try {
-        const data = await getUserGames(user!.id)
+        const data = await getUserGames(id)
         if (!cancelled) setEntries(data)
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load list')
@@ -49,15 +54,22 @@ export function ProfilePage() {
         if (!cancelled) setLoading(false)
       }
     }
-    void load()
+    void load(userId)
     return () => {
       cancelled = true
     }
-  }, [user])
+  }, [user?.id])
 
-  if (authLoading || loading) return <p className="text-muted">Loading…</p>
+  if (authLoading && entries.length === 0) return <p className="text-muted">Loading…</p>
   if (!user) return <Navigate to="/login" replace />
-  if (!profile) return <p className="text-muted">Profile not found.</p>
+  if (!profile) {
+    return authLoading ? (
+      <p className="text-muted">Loading…</p>
+    ) : (
+      <p className="text-muted">Profile not found.</p>
+    )
+  }
+  if (loading && entries.length === 0) return <p className="text-muted">Loading…</p>
 
   async function patchEntry(
     id: string,
@@ -106,6 +118,7 @@ export function ProfilePage() {
       <ProfileDashboard
         identity={profile}
         entries={toProfileEntries(entries)}
+        exportEntries={entries}
         isOwner
         settingsHref="/settings"
         editable

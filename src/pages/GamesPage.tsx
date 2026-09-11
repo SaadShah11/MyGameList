@@ -84,13 +84,14 @@ export function GamesPage() {
 
   useEffect(() => {
     let cancelled = false
+    const userId = user?.id
     async function loadStatuses() {
-      if (!user) {
+      if (!userId) {
         setStatusById({})
         return
       }
       try {
-        const list = await getUserGames(user.id)
+        const list = await getUserGames(userId)
         if (cancelled) return
         const map: Record<number, UserGame> = {}
         for (const entry of list) map[entry.igdb_id] = entry
@@ -103,7 +104,7 @@ export function GamesPage() {
     return () => {
       cancelled = true
     }
-  }, [user])
+  }, [user?.id])
 
   const sorted = useMemo(
     () => sortGames(games, prefs.catalogSort),

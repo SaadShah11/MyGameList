@@ -25,6 +25,7 @@ export function GameDetailPage() {
 
   useEffect(() => {
     let cancelled = false
+    const userId = user?.id
     async function load() {
       if (!configured) {
         setError('Supabase is not configured.')
@@ -39,10 +40,10 @@ export function GameDetailPage() {
           setGame(g)
           if (!g) setError('Game not found.')
         }
-        if (g && user) {
+        if (g && userId) {
           const [ug, favs] = await Promise.all([
-            getUserGame(user.id, g.igdb_id),
-            countFavorites(user.id),
+            getUserGame(userId, g.igdb_id),
+            countFavorites(userId),
           ])
           if (!cancelled) {
             setEntry(ug)
@@ -62,9 +63,9 @@ export function GameDetailPage() {
     return () => {
       cancelled = true
     }
-  }, [slug, user, configured])
+  }, [slug, user?.id, configured])
 
-  if (loading) return <p className="text-muted">Loading…</p>
+  if (loading && !game) return <p className="text-muted">Loading…</p>
   if (error || !game) {
     return (
       <div className="space-y-4">

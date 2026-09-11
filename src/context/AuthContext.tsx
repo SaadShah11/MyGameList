@@ -49,34 +49,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let mounted = true
 
-    supabase.auth.getSession().then(({ data }) => {
+    void supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return
       setSession(data.session)
       setUser(data.session?.user ?? null)
-      if (data.session?.user) {
-        void loadProfile(data.session.user.id).finally(() => {
-          if (mounted) setLoading(false)
-        })
-      } else {
-        setLoading(false)
-      }
+      setLoading(false)
     })
 
+    // Keep this callback sync and free of other Supabase calls.
+    // Token refresh on tab focus would otherwise re-trigger loads / deadlocks.
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next)
-      setUser(next?.user ?? null)
-      if (next?.user) {
-        void loadProfile(next.user.id)
-      } else {
-        setProfile(null)
-      }
+      setUser((prev) => {
+        const nextUser = next?.user ?? null
+        if (prev?.id && nextUser?.id && prev.id === nextUser.id) return prev
+        return nextUser
+      })
     })
 
     return () => {
       mounted = false
       sub.subscription.unsubscribe()
     }
-  }, [loadProfile])
+  }, [])
+
+  useEffect(() => {
+    if (!user?.id) {
+      setProfile(null)
+      return
+    }
+    void loadProfile(user.id)
+  }, [user?.id, loadProfile])
 
   const signUp = useCallback(
     async (email: string, password: string, username: string) => {

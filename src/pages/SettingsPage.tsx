@@ -79,7 +79,7 @@ export function SettingsPage() {
     }
   }, [profile])
 
-  if (loading) return <p className="text-muted">Loading…</p>
+  if (loading && !profile) return <p className="text-muted">Loading…</p>
   if (!user) return <Navigate to="/login" replace />
 
   async function onSaveProfile(e: FormEvent) {

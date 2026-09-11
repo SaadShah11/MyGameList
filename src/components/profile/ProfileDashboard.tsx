@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { ExportListMenu } from '../ExportListMenu'
 import { GamesListModal, type ListTab } from './GamesListModal'
 import {
   computeProfileStats,
@@ -9,7 +10,7 @@ import {
   type ProfileGameEntry,
   type ProfileIdentity,
 } from './types'
-import { STATUS_LABELS, type GameStatus } from '../../types'
+import { STATUS_LABELS, type GameStatus, type UserGame } from '../../types'
 
 export type { ProfileGameEntry, ProfileIdentity } from './types'
 export { STATUS_BAR_COLORS, computeProfileStats } from './types'
@@ -17,6 +18,8 @@ export { STATUS_BAR_COLORS, computeProfileStats } from './types'
 interface ProfileDashboardProps {
   identity: ProfileIdentity
   entries: ProfileGameEntry[]
+  /** Full list rows for owner export (includes notes, platforms, dates). */
+  exportEntries?: UserGame[]
   isOwner?: boolean
   settingsHref?: string
   editable?: boolean
@@ -37,6 +40,7 @@ interface ProfileDashboardProps {
 export function ProfileDashboard({
   identity,
   entries,
+  exportEntries,
   isOwner = false,
   settingsHref,
   editable = false,
@@ -106,6 +110,9 @@ export function ProfileDashboard({
             <button type="button" className="btn btn-primary w-full" onClick={() => openList('all')}>
               Games List
             </button>
+            {isOwner && exportEntries && (
+              <ExportListMenu entries={exportEntries} username={identity.username} />
+            )}
             {isOwner && settingsHref && (
               <Link to={settingsHref} className="btn btn-ghost w-full">
                 Settings

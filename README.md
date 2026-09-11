@@ -45,6 +45,7 @@ VITE_SUPABASE_ANON_KEY=your_anon_key
 6. Run the favourites migration in [`supabase/migrations/20260328000002_favorites.sql`](supabase/migrations/20260328000002_favorites.sql) so favourite games work (max 10).
 7. Run the users directory migration in [`supabase/migrations/20260328000003_users_directory.sql`](supabase/migrations/20260328000003_users_directory.sql) for the Users tab (recent users + search).
 8. Run the public profiles migration in [`supabase/migrations/20260328000004_public_profiles.sql`](supabase/migrations/20260328000004_public_profiles.sql) so clicking a user opens their list.
+9. Run [`supabase/migrations/20260328000005_user_games_created_at.sql`](supabase/migrations/20260328000005_user_games_created_at.sql) so list exports include when each game was added.
 
 ### 3. RAWG API key
 
