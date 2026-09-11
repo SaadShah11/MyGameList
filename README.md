@@ -87,10 +87,11 @@ Open the URL Vite prints (usually `http://localhost:5173/MyGameList/`).
 
 1. Push this repo to GitHub as **MyGameList** (repo name matches Vite `base: '/MyGameList/'`)
 2. Repo **Settings → Pages → Build and deployment → Source**: GitHub Actions
-3. Repo **Settings → Secrets and variables → Actions → Variables**, add:
+3. Repo **Settings → Secrets and variables → Actions → Secrets**, add repository secrets:
    - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-4. Push to `main` (or run the **Deploy to GitHub Pages** workflow manually)
+   - `VITE_SUPABASE_ANON_KEY`  
+   (These are baked into the static JS at build time. Use the full Supabase **anon/public** key.)
+4. Push to `main` (or run the **Deploy to GitHub Pages** workflow manually) so a **new build** picks up the secrets
 
 The site will be at `https://<username>.github.io/MyGameList/`.
 
