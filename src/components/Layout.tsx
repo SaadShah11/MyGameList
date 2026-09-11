@@ -1,4 +1,6 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
+import { LogOut, Settings, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
@@ -27,6 +29,114 @@ function Avatar({ url, name }: { url: string | null | undefined; name: string })
   )
 }
 
+function UserMenu({
+  label,
+  avatarUrl,
+  onSignOut,
+}: {
+  label: string
+  avatarUrl: string | null | undefined
+  onSignOut: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+
+    function onPointerDown(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(false)
+    }
+
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [open])
+
+  const itemClass =
+    'flex w-full items-center gap-2.5 px-3 py-2 text-left no-underline hover:bg-surface-2'
+  const labelStyle = {
+    fontFamily: 'var(--font-sans)',
+    fontSize: '14px',
+    fontWeight: 500,
+    lineHeight: '20px',
+  } as const
+
+  return (
+    <div ref={rootRef} className="relative ml-2">
+      <button
+        type="button"
+        className="flex items-center gap-2 rounded-full border border-transparent py-0.5 pl-2.5 pr-0.5 transition hover:border-line hover:bg-surface-2"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        <span className="max-w-[9rem] truncate text-sm font-medium text-ink sm:max-w-[12rem]">
+          {label}
+        </span>
+        <Avatar url={avatarUrl} name={label} />
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-md border border-line bg-surface py-1 shadow-lg"
+        >
+          <Link
+            role="menuitem"
+            to="/profile"
+            className={`${itemClass} text-ink`}
+            style={labelStyle}
+            onClick={() => setOpen(false)}
+          >
+            <User size={16} strokeWidth={1.75} className="shrink-0 opacity-80" aria-hidden />
+            <span style={labelStyle}>Profile</span>
+          </Link>
+          <Link
+            role="menuitem"
+            to="/settings"
+            className={`${itemClass} text-ink`}
+            style={labelStyle}
+            onClick={() => setOpen(false)}
+          >
+            <Settings size={16} strokeWidth={1.75} className="shrink-0 opacity-80" aria-hidden />
+            <span style={labelStyle}>Settings</span>
+          </Link>
+          <div
+            role="menuitem"
+            tabIndex={0}
+            className={`${itemClass} mx-1 my-0.5 cursor-pointer rounded-sm bg-danger text-white hover:bg-danger hover:brightness-95`}
+            style={labelStyle}
+            onClick={() => {
+              setOpen(false)
+              onSignOut()
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setOpen(false)
+                onSignOut()
+              }
+            }}
+          >
+            <LogOut size={16} strokeWidth={1.75} className="shrink-0" aria-hidden />
+            <span style={labelStyle}>Sign out</span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function Layout() {
   const { user, profile, signOut, configured } = useAuth()
   const label = profile?.display_name || profile?.username || 'player'
@@ -39,29 +149,19 @@ export function Layout() {
             MyGame<span className="text-accent">List</span>
           </Link>
 
-          <nav className="flex flex-wrap items-center gap-0.5">
+          <nav className="flex items-center gap-1">
             <NavLink to="/games" className={navClass}>
               Games
             </NavLink>
-            {user && (
-              <NavLink to="/profile" className={navClass}>
-                My List
-              </NavLink>
-            )}
+            <NavLink to="/users" className={navClass}>
+              Users
+            </NavLink>
             {user ? (
-              <>
-                <Link
-                  to="/settings"
-                  className="ml-2 flex items-center gap-2 rounded-full py-0.5 pl-0.5 pr-2 hover:bg-surface-2"
-                  title="Open settings"
-                >
-                  <Avatar url={profile?.avatar_url} name={label} />
-                  <span className="hidden text-sm font-medium text-muted sm:inline">{label}</span>
-                </Link>
-                <button type="button" onClick={() => void signOut()} className="btn btn-ghost ml-1 !py-1">
-                  Sign out
-                </button>
-              </>
+              <UserMenu
+                label={label}
+                avatarUrl={profile?.avatar_url}
+                onSignOut={() => void signOut()}
+              />
             ) : (
               <>
                 <NavLink to="/login" className={navClass}>

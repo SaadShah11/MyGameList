@@ -10,6 +10,7 @@ import {
   type ThemeMode,
   type ViewMode,
 } from '../context/PreferencesContext'
+import { PAGE_SIZE_OPTIONS, type PageSizeOption } from '../lib/pagination'
 
 function Section({
   title,
@@ -152,7 +153,7 @@ export function SettingsPage() {
         />
       </Section>
 
-      <Section title="Library display" description="Defaults used on Games and My List.">
+      <Section title="Library display" description="Defaults used on Games, Users, and list popups.">
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="space-y-1 text-sm">
             <span className="font-medium text-muted">Games page view</span>
@@ -174,6 +175,20 @@ export function SettingsPage() {
             >
               <option value="grid">Grid</option>
               <option value="list">List</option>
+            </select>
+          </label>
+          <label className="space-y-1 text-sm">
+            <span className="font-medium text-muted">Items per page</span>
+            <select
+              className="field"
+              value={prefs.pageSize}
+              onChange={(e) => setPref('pageSize', Number(e.target.value) as PageSizeOption)}
+            >
+              {PAGE_SIZE_OPTIONS.map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
             </select>
           </label>
           <label className="space-y-1 text-sm">
@@ -200,7 +215,7 @@ export function SettingsPage() {
               <option value="year">Release year</option>
             </select>
           </label>
-          <label className="space-y-1 text-sm sm:col-span-2">
+          <label className="space-y-1 text-sm">
             <span className="font-medium text-muted">My List sort</span>
             <select
               className="field"

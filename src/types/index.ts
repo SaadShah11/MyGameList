@@ -44,6 +44,46 @@ export interface Profile {
   created_at: string
 }
 
+export interface DirectoryUser {
+  id: string
+  username: string
+  display_name: string | null
+  avatar_url: string | null
+  created_at: string
+  list_count: number
+  last_active_at: string | null
+  recent_game_name: string | null
+  recent_game_slug: string | null
+  recent_game_cover: string | null
+  recent_status: string | null
+}
+
+export interface PublicProfile {
+  id: string
+  username: string
+  display_name: string | null
+  avatar_url: string | null
+  created_at: string
+  list_count: number
+  favorite_count: number
+}
+
+export interface PublicListEntry {
+  id: string
+  igdb_id: number
+  status: GameStatus
+  score: number | null
+  hours_played: number | null
+  is_favorite: boolean
+  updated_at: string
+  game_name: string | null
+  game_slug: string | null
+  cover_url: string | null
+  release_year: number | null
+  platforms: string[]
+  genres: string[]
+}
+
 export interface Game {
   igdb_id: number
   name: string

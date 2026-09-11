@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { GameCard, GameListRow } from '../components/GameCard'
 import { DensityToggle } from '../components/DensityToggle'
+import { Pagination } from '../components/Pagination'
 import { SearchBar } from '../components/SearchBar'
 import { ViewToggle } from '../components/ViewToggle'
 import { useAuth } from '../context/AuthContext'
@@ -10,7 +11,9 @@ import {
   usePreferences,
   type CatalogSort,
 } from '../context/PreferencesContext'
+import { usePagination } from '../hooks/usePagination'
 import { getPopularGames, searchGames } from '../lib/gamesApi'
+import { clampPageSize } from '../lib/pagination'
 import { getUserGames, removeUserGame, upsertUserGame } from '../lib/userGames'
 import type { Game, GameStatus, UserGame } from '../types'
 
@@ -31,16 +34,24 @@ export function GamesPage() {
   const { configured, user } = useAuth()
   const { prefs, setPref } = usePreferences()
   const [games, setGames] = useState<Game[]>([])
+  const [total, setTotal] = useState(0)
   const [statusById, setStatusById] = useState<Record<number, UserGame>>({})
   const [busyId, setBusyId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const { page, pageSize, setPage, setPageSize } = usePagination({
+    total,
+    defaultPageSize: prefs.pageSize,
+    resetKey: query,
+  })
 
   useEffect(() => {
     let cancelled = false
     async function load() {
       if (!configured) {
         setGames([])
+        setTotal(0)
         setLoading(false)
         setError('Configure Supabase and deploy the rawg-proxy function to load games.')
         return
@@ -48,11 +59,17 @@ export function GamesPage() {
       setLoading(true)
       setError(null)
       try {
-        const results = query ? await searchGames(query) : await getPopularGames()
-        if (!cancelled) setGames(results)
+        const results = query
+          ? await searchGames(query, pageSize, page)
+          : await getPopularGames(pageSize, page)
+        if (!cancelled) {
+          setGames(results.games)
+          setTotal(results.count)
+        }
       } catch (err) {
         if (!cancelled) {
           setGames([])
+          setTotal(0)
           setError(err instanceof Error ? err.message : 'Failed to load games')
         }
       } finally {
@@ -63,7 +80,7 @@ export function GamesPage() {
     return () => {
       cancelled = true
     }
-  }, [query, configured])
+  }, [query, configured, page, pageSize])
 
   useEffect(() => {
     let cancelled = false
@@ -129,6 +146,12 @@ export function GamesPage() {
     [user, statusById],
   )
 
+  function onPageSizeChange(size: number) {
+    const next = clampPageSize(size)
+    setPageSize(next)
+    setPref('pageSize', next)
+  }
+
   return (
     <div className="space-y-6">
       <div className="space-y-3">
@@ -154,7 +177,9 @@ export function GamesPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-y border-line py-3">
         <p className="text-sm text-muted">
-          {loading ? 'Loading…' : `${sorted.length} title${sorted.length === 1 ? '' : 's'}`}
+          {loading
+            ? 'Loading…'
+            : `${total.toLocaleString()} title${total === 1 ? '' : 's'}`}
         </p>
         <div className="relative z-20 flex flex-wrap items-center gap-2">
           <label className="flex items-center gap-2 text-sm text-muted">
@@ -223,6 +248,18 @@ export function GamesPage() {
               }
             />
           ))}
+        </div>
+      )}
+
+      {!loading && !error && total > 0 && (
+        <div className="panel overflow-hidden">
+          <Pagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={onPageSizeChange}
+          />
         </div>
       )}
     </div>

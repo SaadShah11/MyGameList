@@ -38,6 +38,7 @@ interface NormalizedGame {
 }
 
 interface RawgListResponse {
+  count?: number
   results?: RawgGame[]
 }
 
@@ -109,29 +110,35 @@ Deno.serve(async (req) => {
 
     const payload = await req.json()
     const action = payload.action as string
-    const limit = Math.min(Number(payload.limit) || 24, 40)
+    const limit = Math.min(Math.max(Number(payload.limit) || 24, 1), 40)
+    const page = Math.max(Number(payload.page) || 1, 1)
 
     const supabase = createClient(supabaseUrl, serviceKey)
     let raw: RawgGame[] = []
+    let totalCount: number | null = null
 
     if (action === 'search') {
       const query = String(payload.query ?? '').trim()
       if (!query) {
-        return new Response(JSON.stringify({ games: [] }), {
+        return new Response(JSON.stringify({ games: [], count: 0, page, page_size: limit }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
       const data = (await rawgGet('/games', rawgApiKey, {
         search: query,
+        page: String(page),
         page_size: String(limit),
       })) as RawgListResponse
       raw = data.results ?? []
+      totalCount = typeof data.count === 'number' ? data.count : raw.length
     } else if (action === 'popular') {
       const data = (await rawgGet('/games', rawgApiKey, {
         ordering: '-added',
+        page: String(page),
         page_size: String(limit),
       })) as RawgListResponse
       raw = data.results ?? []
+      totalCount = typeof data.count === 'number' ? data.count : raw.length
     } else if (action === 'get_by_slug') {
       const slug = String(payload.slug ?? '').trim()
       const data = (await rawgGet('/games', rawgApiKey, {
@@ -163,9 +170,17 @@ Deno.serve(async (req) => {
       })
     }
 
-    return new Response(JSON.stringify({ games }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return new Response(
+      JSON.stringify({
+        games,
+        count: totalCount ?? games.length,
+        page,
+        page_size: limit,
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
+    )
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unexpected error'
     return new Response(JSON.stringify({ error: message }), {

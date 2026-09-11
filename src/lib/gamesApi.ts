@@ -4,7 +4,17 @@ import type { Game } from '../types'
 interface ProxyResponse {
   games?: Game[]
   game?: Game
+  count?: number
+  page?: number
+  page_size?: number
   error?: string
+}
+
+export interface GamesPageResult {
+  games: Game[]
+  count: number
+  page: number
+  pageSize: number
 }
 
 async function invokeProxy(body: Record<string, unknown>): Promise<ProxyResponse> {
@@ -37,14 +47,37 @@ async function invokeProxy(body: Record<string, unknown>): Promise<ProxyResponse
   return payload
 }
 
-export async function searchGames(query: string, limit = 24): Promise<Game[]> {
-  const result = await invokeProxy({ action: 'search', query, limit })
-  return result.games ?? []
+function toPageResult(
+  result: ProxyResponse,
+  page: number,
+  pageSize: number,
+): GamesPageResult {
+  const games = result.games ?? []
+  return {
+    games,
+    count: typeof result.count === 'number' ? result.count : games.length,
+    page: result.page ?? page,
+    pageSize: result.page_size ?? pageSize,
+  }
 }
 
-export async function getPopularGames(limit = 24): Promise<Game[]> {
-  const result = await invokeProxy({ action: 'popular', limit })
-  return result.games ?? []
+export async function searchGames(
+  query: string,
+  pageSize = 10,
+  page = 1,
+): Promise<GamesPageResult> {
+  const limit = Math.min(Math.max(pageSize, 1), 40)
+  const result = await invokeProxy({ action: 'search', query, limit, page })
+  return toPageResult(result, page, limit)
+}
+
+export async function getPopularGames(
+  pageSize = 10,
+  page = 1,
+): Promise<GamesPageResult> {
+  const limit = Math.min(Math.max(pageSize, 1), 40)
+  const result = await invokeProxy({ action: 'popular', limit, page })
+  return toPageResult(result, page, limit)
 }
 
 export async function getGameBySlug(slug: string): Promise<Game | null> {

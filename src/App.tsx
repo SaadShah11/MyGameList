@@ -7,8 +7,10 @@ import { GamesPage } from './pages/GamesPage'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { PublicProfilePage } from './pages/PublicProfilePage'
 import { SettingsPage } from './pages/SettingsPage'
 import { SignupPage } from './pages/SignupPage'
+import { UsersPage } from './pages/UsersPage'
 
 export default function App() {
   return (
@@ -20,6 +22,8 @@ export default function App() {
               <Route index element={<HomePage />} />
               <Route path="games" element={<GamesPage />} />
               <Route path="games/:slug" element={<GameDetailPage />} />
+              <Route path="users" element={<UsersPage />} />
+              <Route path="users/:username" element={<PublicProfilePage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="login" element={<LoginPage />} />

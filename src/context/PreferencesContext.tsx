@@ -8,11 +8,14 @@ import {
   type ReactNode,
 } from 'react'
 
+import { clampPageSize, type PageSizeOption } from '../lib/pagination'
+
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type ViewMode = 'grid' | 'list'
 export type GridDensity = 'comfortable' | 'compact' | 'dense'
 export type CatalogSort = 'default' | 'name' | 'year'
 export type ListSort = 'updated' | 'name' | 'score' | 'status'
+export type { PageSizeOption }
 
 export interface Preferences {
   theme: ThemeMode
@@ -21,6 +24,7 @@ export interface Preferences {
   gridDensity: GridDensity
   catalogSort: CatalogSort
   listSort: ListSort
+  pageSize: PageSizeOption
   showPlatforms: boolean
   showGenres: boolean
   reduceMotion: boolean
@@ -35,6 +39,7 @@ const defaults: Preferences = {
   gridDensity: 'comfortable',
   catalogSort: 'default',
   listSort: 'updated',
+  pageSize: 10,
   showPlatforms: true,
   showGenres: true,
   reduceMotion: false,
@@ -54,7 +59,12 @@ function loadPrefs(): Preferences {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return defaults
-    return { ...defaults, ...(JSON.parse(raw) as Partial<Preferences>) }
+    const parsed = JSON.parse(raw) as Partial<Preferences>
+    return {
+      ...defaults,
+      ...parsed,
+      pageSize: clampPageSize(Number(parsed.pageSize ?? defaults.pageSize)),
+    }
   } catch {
     return defaults
   }
